@@ -10,100 +10,88 @@ class Player {
 	const geometry = new THREE.BoxGeometry(1,1,1)//boxWidth, boxHeight, boxDepth);
   	const material = new THREE.MeshNormalMaterial(); 
 
-  	this.obj = new THREE.Mesh(geometry, material);
+  	this.object = new THREE.Mesh(geometry, material);
   	
-  	this.addOnScene(scene)
-
+  	
   	}
+}
 
-	addOnScene(scene) {
-		scene.add(this.obj)
+
+class MyScene {
+
+	constructor() {
+			
+		this.canvas = document.querySelector('#c')
+		this.renderer = new THREE.WebGLRenderer({canvas : this.canvas, alpha : true,})
+		this.scene = new THREE.Scene()
+		 
+		this.initCamera()
+
 	}
 
+	addLight(Light = new THREE.HemisphereLight(0xffffbb,3)) {
+
+    	this.scene.add(Light)
+	}
+	setControls() {
+		this.controls = new OrbitControls(this.camera,this.renderer.domElement);
+		this.controls.update()
+	}
+
+	initCamera() {
+		const fov = 75;
+ 		const aspect = this.canvas.clientWidth/this.canvas.clientHeight;  // the canvas default
+  		const near = 0.1;
+ 		const far = 1000;
 
 
+		this.camera = new THREE.PerspectiveCamera(fov,aspect,near,far);
+		this.camera.position.z = 2;
+		this.setControls()
+	}
 
+	resizeRendererToDisplaySize() {
+    	const canvas = this.renderer.domElement;
+    	const width = canvas.clientWidth
+
+    	const height = canvas.clientHeight
+
+   		const needResize = canvas.width !== width || canvas.height !== height;
+    	if (needResize) {
+      		this.renderer.setSize(width, height, false);
+      		this.camera.aspect = canvas.clientWidth/canvas.clientHeight
+      		this.camera.updateProjectionMatrix()
+    	}
+    	return needResize;
+ 	}
+ 	update() {
+ 		this.controls.update()
+ 		this.resizeRendererToDisplaySize()
+ 		this.renderer.render(this.scene, this.camera);
+ 	}
+
+ 	addObject(player) {
+ 		this.scene.add(player.object)
+ 	}
 
 }
 
-function addLightsOn(scene) 
-{
-	
-    const color = 0xffffbb;
-    const size = 3;
-    const light = new THREE.HemisphereLight( color, size );
-    scene.add(light);
-
-    let helper = new THREE.HemisphereLightHelper( light, 5 );
-	scene.add( helper )
-  
-}
 
 
+ function main() {
+ 	const myScene = new MyScene()
+ 	const player = new Player()
 
-function getControls(camera,renderer) {
-	return new OrbitControls(camera,renderer.domElement);
-}
+ 	myScene.addObject(player)
 
-function resizeRendererToDisplaySize(renderer) {
-    const canvas = renderer.domElement;
-    const width = canvas.clientWidth
-
-    const height = canvas.clientHeight
-
-    const needResize = canvas.width !== width || canvas.height !== height;
-    if (needResize) {
-      renderer.setSize(width, height, false);
-    }
-    return needResize;
+ 	function render(time) {
+ 		time *=0.001
+ 		myScene.update()
+ 		requestAnimationFrame(render)
+ 	}
+ 	requestAnimationFrame(render)
  }
 
-
-
-function main(){
-
-	const canvas = document.querySelector('#c')
-	const renderer = new THREE.WebGLRenderer({canvas, alpha : true,})
-	
-
-	const scene = new THREE.Scene()
-	addLightsOn(scene)
-
-	const fov = 75;
- 	const aspect = canvas.clientWidth/canvas.clientHeight;  // the canvas default
-  	const near = 0.1;
- 	const far = 1000;
-
-
-	const camera = new THREE.PerspectiveCamera(fov,aspect,near,far);
-	camera.position.z = 2;
-	
-
-	const controls = getControls(camera,renderer)
-	controls.update()
-
-	let player = new Player(scene)
-
-  	
-
-function render(time) {
-    time *= 0.001;
-
-    controls.update();
-
-    if (resizeRendererToDisplaySize(renderer)) {
-      const canvas = renderer.domElement
-      camera.aspect = canvas.clientWidth/canvas.clientHeight
-      camera.updateProjectionMatrix()
-    }
-
-
-    renderer.render(scene, camera);
-
-    requestAnimationFrame(render);
-  }
-  	//renderer.render(scene, camera);
-  	requestAnimationFrame(render);
-}
-
 main()
+
+
