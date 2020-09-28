@@ -12,8 +12,12 @@ class Player {
 
   	this.object = new THREE.Mesh(geometry, material);
   	
-  	
-  	}
+   	}
+
+   	move(time) {
+
+   		this.object.position.x +=time
+   	}
 }
 
 
@@ -26,6 +30,7 @@ class MyScene {
 		this.scene = new THREE.Scene()
 		 
 		this.initCamera()
+		this.addDecoration()
 
 	}
 
@@ -70,10 +75,52 @@ class MyScene {
  		this.renderer.render(this.scene, this.camera);
  	}
 
- 	addObject(player) {
- 		this.scene.add(player.object)
+ 	addObject(object) {
+ 		this.scene.add(object)
  	}
 
+ 	addDecoration() {
+ 		const ground = new THREE.Mesh(
+ 							new THREE.PlaneBufferGeometry( 100, 4, 1, 1 ),
+ 							new THREE.MeshBasicMaterial()
+ 							);
+
+ 		this.addObject(ground);
+ 		ground.position.y = -0.5
+ 		// ground.receiveShadow = true; // to do
+ 		ground.rotation.x = - Math.PI / 2
+ 		
+ 	}
+
+}
+
+class EventHandler {
+
+	constructor() {
+		//this.scene = scene;
+		//this.player = player
+	}
+
+	waitForEvents() {
+
+		return new Promise(resolve => {
+ 			setTimeout(function() {
+ 				//console.log("waiting...")
+ 			
+ 			}, 50);
+ 		})
+	}
+
+	performMove(dt) {
+ 		return new Promise(resolve => {
+ 			setTimeout(function() {
+ 				//scene.canvas.addEventListener("keydown", event =>{
+ 					//if(event.keyCode === 32 ) player.move(dt);
+ 					//console.log(dt)
+ 				
+ 			}, 50);
+ 		})
+ 	}
 }
 
 
@@ -81,12 +128,59 @@ class MyScene {
  function main() {
  	const myScene = new MyScene()
  	const player = new Player()
+ 	const eventHandler = new EventHandler(myScene,player)
 
- 	myScene.addObject(player)
+ 	myScene.addObject(player.object)
+
+ 	
+ 	//let scheduled = null;
+ 	let dt = 0
 
  	function render(time) {
+ 		
  		time *=0.001
+ 		eventHandler.waitForEvents().then(
+ 			myScene.canvas.addEventListener("keydown", event =>{
+ 					if(event.keyCode === 32 ) player.move(dt);
+ 				}
+ 			)
+ 		)
+
  		myScene.update()
+
+ 		//Basic sheduler
+
+
+	/*
+ 	function performMove() {
+ 		return new Promise(resolve => {
+ 			setTimeout(function() {
+ 				myScene.canvas.addEventListener("keydown", event =>{
+ 					if(event.keyCode === 32 ) player.move(dt);
+ 					//console.log(dt)
+ 				})
+ 			}, 50);
+ 		})
+ 	}
+
+ 	performMove()
+
+ 		/*
+  		myScene.canvas.addEventListener("keydown", (event) => {
+    	if (!scheduled) {
+      		setTimeout(() => {
+        	if(event.keyCode === 32 ) player.move(0.05);
+        	scheduled = null;
+      	}, 25);
+    }
+    	scheduled = event;
+  	})
+ 		*/
+		
+ 			
+ 		
+
+
  		requestAnimationFrame(render)
  	}
  	requestAnimationFrame(render)
