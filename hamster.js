@@ -2,19 +2,36 @@ import * as THREE from './js/three.module.js';
 import { OrbitControls } from './js/OrbitControls.js'
 import Stats from './js/Stats.js'
 import {GUI} from './js/dat.gui.module.js'
+import {GLTFLoader} from './js/GLTFLoader.js'
 
 class Player {
 	
 	constructor(scene){
+    
+    this.myScene = scene;
 
-	const geometry = new THREE.BoxGeometry(1,1,1)//boxWidth, boxHeight, boxDepth);
+    
+    //this.object = this.myScene.scene.children[1];
+    console.log(this.object);
+    
+  }
+
+
+    
+	  /*
+    const geometry = new THREE.BoxGeometry(1,1,1)//boxWidth, boxHeight, boxDepth);
   	const material = new THREE.MeshNormalMaterial(); 
 
   	this.object = new THREE.Mesh(geometry, material);
   	
    	}
+    */
+    
+
+        
 
    	move(time) {
+      console.log(this.object.position.x);
 
    		this.object.position.x +=time
    	}
@@ -31,8 +48,19 @@ class MyScene {
 		 
 		this.initCamera()
 		this.addDecoration()
+    this.loadModel()
 
 	}
+
+  loadModel() {
+      const loader = new GLTFLoader();
+      const url = 'Objects/scene.gltf';
+      loader.load(url, function(gltf) {
+          this.addObject(gltf.scene);
+             
+    
+        })
+    }
 
 	addLight(Light = new THREE.HemisphereLight(0xffffbb,3)) {
 
@@ -46,12 +74,12 @@ class MyScene {
 	initCamera() {
 		const fov = 75;
  		const aspect = this.canvas.clientWidth/this.canvas.clientHeight;  // the canvas default
-  		const near = 0.1;
+  	const near = 0.1;
  		const far = 1000;
 
 
 		this.camera = new THREE.PerspectiveCamera(fov,aspect,near,far);
-		this.camera.position.z = 2;
+		this.camera.position.z = -4 ;
 		this.setControls()
 	}
 
@@ -123,68 +151,52 @@ class EventHandler {
  	}
 }
 
+/*
+function dumpObject(obj, lines = [], isLast = true, prefix = '') {
+  const localPrefix = isLast ? '└─' : '├─';
+  lines.push(`${prefix}${prefix ? localPrefix : ''}${obj.name || '*no-name*'} [${obj.type}]`);
+  const newPrefix = prefix + (isLast ? '  ' : '│ ');
+  const lastNdx = obj.children.length - 1;
+  obj.children.forEach((child, ndx) => {
+    const isLast = ndx === lastNdx;
+    dumpObject(child, lines, isLast, newPrefix);
+  });
+  return lines;
+}
 
+*/
 
- function main() {
+function main() {
  	const myScene = new MyScene()
- 	const player = new Player()
+ 	const player = new Player(myScene)
  	const eventHandler = new EventHandler(myScene,player)
 
- 	myScene.addObject(player.object)
+ 	//myScene.addObject(player.object)
 
  	
- 	//let scheduled = null;
- 	let dt = 0
+ 	
+
+ 	let dt = 0.01
 
  	function render(time) {
- 		
- 		time *=0.001
- 		eventHandler.waitForEvents().then(
- 			myScene.canvas.addEventListener("keydown", event =>{
- 					if(event.keyCode === 32 ) player.move(dt);
- 				}
- 			)
- 		)
-
- 		myScene.update()
-
- 		//Basic sheduler
 
 
-	/*
- 	function performMove() {
- 		return new Promise(resolve => {
- 			setTimeout(function() {
- 				myScene.canvas.addEventListener("keydown", event =>{
- 					if(event.keyCode === 32 ) player.move(dt);
- 					//console.log(dt)
- 				})
- 			}, 50);
- 		})
+ 	  eventHandler.waitForEvents().then(
+      myScene.canvas.addEventListener("keydown", event =>{
+          if(event.keyCode === 32 ) player.move(dt);
+        }
+      )
+    )
+
+ 	  myScene.update()
+ 	  
+ 	  
+
+ 	  requestAnimationFrame(render)
  	}
-
- 	performMove()
-
- 		/*
-  		myScene.canvas.addEventListener("keydown", (event) => {
-    	if (!scheduled) {
-      		setTimeout(() => {
-        	if(event.keyCode === 32 ) player.move(0.05);
-        	scheduled = null;
-      	}, 25);
-    }
-    	scheduled = event;
-  	})
- 		*/
-		
- 			
- 		
-
-
- 		requestAnimationFrame(render)
- 	}
- 	requestAnimationFrame(render)
- }
+ 	
+  requestAnimationFrame(render)
+}
 
 main()
 
