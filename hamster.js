@@ -6,32 +6,21 @@ import {GLTFLoader} from './js/GLTFLoader.js'
 
 class Player {
 	
-	constructor(scene){
+	constructor(){
     
-    this.myScene = scene;
 
-    
-    //this.object = this.myScene.scene.children[1];
-    console.log(this.object);
     
   }
 
+  	setPlayer(object) {
+  		this.object = object
+  	}
 
-    
-	  /*
-    const geometry = new THREE.BoxGeometry(1,1,1)//boxWidth, boxHeight, boxDepth);
-  	const material = new THREE.MeshNormalMaterial(); 
 
-  	this.object = new THREE.Mesh(geometry, material);
-  	
-   	}
-    */
-    
-
-        
+           
 
    	move(time) {
-      console.log(this.object.position.x);
+      //console.log(this.object.position.x);
 
    		this.object.position.x +=time
    	}
@@ -44,23 +33,18 @@ class MyScene {
 			
 		this.canvas = document.querySelector('#c')
 		this.renderer = new THREE.WebGLRenderer({canvas : this.canvas, alpha : true,})
+		this.renderer.shadowMap.enabled = true;
+		
 		this.scene = new THREE.Scene()
 		 
 		this.initCamera()
+		this.setControls()
 		this.addDecoration()
-    this.loadModel()
+   
 
 	}
 
-  loadModel() {
-      const loader = new GLTFLoader();
-      const url = 'Objects/scene.gltf';
-      loader.load(url, function(gltf) {
-          this.addObject(gltf.scene);
-             
-    
-        })
-    }
+  
 
 	addLight(Light = new THREE.HemisphereLight(0xffffbb,3)) {
 
@@ -72,15 +56,17 @@ class MyScene {
 	}
 
 	initCamera() {
-		const fov = 75;
+		const fov = 30;
  		const aspect = this.canvas.clientWidth/this.canvas.clientHeight;  // the canvas default
-  	const near = 0.1;
- 		const far = 1000;
+  		const near = 1;
+ 		const far = 5000;
 
 
 		this.camera = new THREE.PerspectiveCamera(fov,aspect,near,far);
-		this.camera.position.z = -4 ;
-		this.setControls()
+
+		this.camera.position.set( 10, 10, 50 );
+		
+		
 	}
 
 	resizeRendererToDisplaySize() {
@@ -97,9 +83,11 @@ class MyScene {
     	}
     	return needResize;
  	}
- 	update() {
+ 	update(delta) {
  		this.controls.update()
  		this.resizeRendererToDisplaySize()
+
+ 		
  		this.renderer.render(this.scene, this.camera);
  	}
 
@@ -108,15 +96,17 @@ class MyScene {
  	}
 
  	addDecoration() {
+ 		const length = 100;
  		const ground = new THREE.Mesh(
- 							new THREE.PlaneBufferGeometry( 100, 4, 1, 1 ),
+ 							new THREE.PlaneBufferGeometry( length, length/20, 1, 1 ),
  							new THREE.MeshBasicMaterial()
  							);
 
- 		this.addObject(ground);
- 		ground.position.y = -0.5
- 		// ground.receiveShadow = true; // to do
+ 		
+ 		ground.position.set(length/2.5,0,0) 
+ 		ground.receiveShadow = true; // to do
  		ground.rotation.x = - Math.PI / 2
+ 		this.addObject(ground);
  		
  	}
 
@@ -125,8 +115,7 @@ class MyScene {
 class EventHandler {
 
 	constructor() {
-		//this.scene = scene;
-		//this.player = player
+		
 	}
 
 	waitForEvents() {
@@ -139,54 +128,74 @@ class EventHandler {
  		})
 	}
 
-	performMove(dt) {
- 		return new Promise(resolve => {
- 			setTimeout(function() {
- 				//scene.canvas.addEventListener("keydown", event =>{
- 					//if(event.keyCode === 32 ) player.move(dt);
- 					//console.log(dt)
- 				
- 			}, 50);
- 		})
- 	}
+	
+ 		
+ 	
 }
 
-/*
-function dumpObject(obj, lines = [], isLast = true, prefix = '') {
-  const localPrefix = isLast ? '└─' : '├─';
-  lines.push(`${prefix}${prefix ? localPrefix : ''}${obj.name || '*no-name*'} [${obj.type}]`);
-  const newPrefix = prefix + (isLast ? '  ' : '│ ');
-  const lastNdx = obj.children.length - 1;
-  obj.children.forEach((child, ndx) => {
-    const isLast = ndx === lastNdx;
-    dumpObject(child, lines, isLast, newPrefix);
-  });
-  return lines;
-}
 
-*/
+
+
 
 function main() {
  	const myScene = new MyScene()
- 	const player = new Player(myScene)
+ 	const player = new Player()
  	const eventHandler = new EventHandler(myScene,player)
 
+ 	var mixers = [];
+
+ 	const loader = new GLTFLoader();
+    const url = 'Model/Flamingo.glb';
+    loader.load(url, function(gltf) {
+    		console.log(gltf);
+      		var mesh = gltf.scene.children[ 0 ];
+          
+          	var s = 0.02;
+			mesh.scale.set( s, s, s );
+			mesh.position.y = 5;
+			mesh.rotation.y =  Math.PI / 2;
+			mesh.castShadow = true;
+			mesh.receiveShadow = true;
+
+			myScene.addObject(mesh);
+			player.setPlayer(mesh);
+            
+            var mixer = new THREE.AnimationMixer( mesh );
+			mixer.clipAction( gltf.animations[ 0 ] ).setDuration( 1 ).play();
+			mixers.push( mixer )
+		   })
+	
  	//myScene.addObject(player.object)
 
  	
- 	
 
- 	let dt = 0.01
+
+ 	
+    let clock = new THREE.Clock();
+    
 
  	function render(time) {
 
+ 		var delta = clock.getDelta();
+ 		let distance = delta*0.05;
 
- 	  eventHandler.waitForEvents().then(
-      myScene.canvas.addEventListener("keydown", event =>{
-          if(event.keyCode === 32 ) player.move(dt);
+ 	   eventHandler.waitForEvents().then(
+       myScene.canvas.addEventListener("keydown", event =>{
+           if(event.keyCode === 32 ) player.move(distance);
         }
       )
     )
+ 	  
+ 	  
+ 	  
+ 	 
+
+ 	  for ( var i = 0; i < mixers.length; i ++ ) {
+
+			mixers[i].update(delta);
+
+		}
+	
 
  	  myScene.update()
  	  
